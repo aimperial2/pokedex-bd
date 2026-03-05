@@ -1,27 +1,28 @@
-export function cleanInput(input: string): string[] {
-    return input.trim().toLowerCase().split(" ").filter(s => s !== "");
+import type { State } from "./state.js";
 
+export function cleanInput(input: string): string[] {
+  return input.trim().toLowerCase().split(" ").filter(s => s !== "");
 }
 
-import { read } from "fs";
-import * as readline from "readline";
+export function startREPL(state: State) {
+  state.rl.prompt();
 
-export function startREPL() {
-    const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-        prompt: " Pokedex > ",
-    })
-
-    rl.prompt();
-
-    rl.on("line", (line) => {
-        const words = cleanInput(line);
-        if (words.length === 0) {
-            rl.prompt();
-            return;
-        }
-        console.log(`Your command was: ${words[0]}`);
-        rl.prompt();
-    });
+  state.rl.on("line", (line) => {
+    const words = cleanInput(line);
+    if (words.length === 0) {
+      state.rl.prompt();
+      return;
+    }
+    const cmd = state.commands[words[0]];
+    if (!cmd) {
+      console.log("Unknown command");
+    } else {
+      try {
+        cmd.callback(state);
+      } catch (e) {
+        console.log(e);
+      }
+    }
+    state.rl.prompt();
+  });
 }
